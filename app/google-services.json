@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "423952705696",
+    "firebase_url": "https://vido-256318.firebaseio.com",
+    "project_id": "vido-256318",
+    "storage_bucket": "vido-256318.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423952705696:android:e0241d7f6b1ea8754041c5",
+        "android_client_info": {
+          "package_name": "com.vido"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "423952705696-f03jnrel7om6k2j1clvj47s9f7v17dlb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCco2tpF08Os6OcpkjkwXGqSlPjC2k00LY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "423952705696-f03jnrel7om6k2j1clvj47s9f7v17dlb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
