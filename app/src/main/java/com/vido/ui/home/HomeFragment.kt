@@ -18,6 +18,8 @@ import android.view.*
 import android.widget.SearchView
 import android.widget.*
 import com.vido.MainActivity
+import com.vido.SettingsActivity
+import com.vido.VideoEditActivity
 import com.vido.model.Folder
 import com.vido.model.TreeNode
 
@@ -54,7 +56,8 @@ class HomeFragment : Fragment() {
                 setFolder(folder.children[arg2])
             } else {
                 val myIntent = Intent(context, VideoActivity::class.java)
-                myIntent.putExtra("video", myCustomAdapter!!.mvideos[arg2 - folder.children.size])
+
+                myIntent.putExtra("video_index", VideoDetails.all.indexOf(myCustomAdapter!!.mvideos[arg2 - folder.children.size]))
                 startActivity(myIntent)
             }
 
@@ -64,7 +67,13 @@ class HomeFragment : Fragment() {
 
         return root
     }
-
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == R.id.action_profile) {
+            val myIntent = Intent(context, SettingsActivity::class.java)
+            startActivity(myIntent)
+        }
+        return super.onOptionsItemSelected(item)
+    }
 
     private fun setFolder(folder: TreeNode<Folder>) {
         myCustomAdapter!!.mfolders = folder

@@ -14,11 +14,10 @@ data class Folder(
         fun fetch(after: () -> Unit) {
             if (didFetch) {
                 after()
-                return
             }
             didFetch = true
-
-            root = TreeNode<Folder>(Folder("root", parent = ""))
+            var new_root = TreeNode<Folder>(Folder("root", parent = ""))
+            var new_all = arrayListOf<String>()
             val db = FirebaseFirestore.getInstance()
             var list = arrayListOf<Folder>()
 
@@ -31,17 +30,18 @@ data class Folder(
                     }
                 }
             }
-            all.add("Racine")
+            new_all.add("Racine")
             db.document(User.company!!.path).collection("folders")
                 .get()
                 .addOnSuccessListener { result ->
                     for (document in result) {
                         var vd = Folder(document.getString("name")!!,document.getString("parent")!!)
-                        all.add(document.getString("name")!!)
+                        new_all.add(document.getString("name")!!)
                         list.add(vd)
                     }
-                    addChildrensTo(root)
-                    print(root)
+                    addChildrensTo(new_root)
+                    root = new_root
+                    all = new_all
                     after()
                 }
                 .addOnFailureListener { exception ->

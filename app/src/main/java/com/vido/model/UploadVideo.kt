@@ -1,6 +1,7 @@
 package com.vido.model
 
 import android.net.Uri
+import android.util.Log
 import androidx.core.net.toFile
 import com.fasterxml.jackson.core.JsonFactory
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
@@ -29,6 +30,7 @@ import com.google.api.client.http.HttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.firebase.firestore.FirebaseFirestore
 import java.sql.Timestamp
+import kotlin.math.roundToInt
 
 
 /**
@@ -54,8 +56,22 @@ object UploadVideo {
      */
     private val VIDEO_FILE_FORMAT = "video/mp4"
 
-    fun main(title: String, description: String, folder: String) {
-        val videoPath = VidoFile.compressedFinalVideoFile.toString()
+
+    fun deleteVideo(video: VideoDetails) {
+        thread(start = true) {
+            val credential = GoogleCredential().setAccessToken(accessToken())
+            youtube = YouTube.Builder(NetHttpTransport(), JacksonFactory(), credential)
+                .setApplicationName(
+                    "youtube-cmdline-uploadvideo-sample"
+                ).build()
+            val deleter = youtube!!.videos().delete(video.youtube_id)
+            deleter.execute()
+        }
+    }
+
+
+    fun main(title: String, description: String, folder: String, progress: (String, Int) -> Unit) {
+        val videoPath = VidoFile.finalVideoFile.toString()
 
         try {
             // Authorize the request.
@@ -95,8 +111,8 @@ object UploadVideo {
             print(videoPath)
 
             val mediaContent = InputStreamContent(VIDEO_FILE_FORMAT,
-                VidoFile.compressedFinalVideoFile.inputStream())
-            mediaContent.setLength(VidoFile.compressedFinalVideoFile.length())
+                VidoFile.finalVideoFile.inputStream())
+            mediaContent.setLength(VidoFile.finalVideoFile.length())
 
             // Insert the video. The command sends three arguments. The first
             // specifies which information the API request is setting and which
@@ -120,15 +136,11 @@ object UploadVideo {
             uploader.isDirectUploadEnabled = false
 
             val progressListener = MediaHttpUploaderProgressListener { uploader ->
+                uploader.progress
                 when (uploader.uploadState) {
-                    MediaHttpUploader.UploadState.INITIATION_STARTED -> println("Initiation Started")
-                    MediaHttpUploader.UploadState.INITIATION_COMPLETE -> println("Initiation Completed")
-                    MediaHttpUploader.UploadState.MEDIA_IN_PROGRESS -> {
-                        println("Upload in progress")
-                        println("Upload percentage: " + uploader.progress)
-                    }
-                    MediaHttpUploader.UploadState.MEDIA_COMPLETE -> println("Upload Completed!")
-                    MediaHttpUploader.UploadState.NOT_STARTED -> println("Upload Not Started!")
+                    MediaHttpUploader.UploadState.INITIATION_STARTED -> progress("Initialisation...", (uploader.progress*100).roundToInt())
+                    MediaHttpUploader.UploadState.INITIATION_COMPLETE -> progress("Initialisation terminé", (uploader.progress*100).roundToInt())
+                    MediaHttpUploader.UploadState.MEDIA_IN_PROGRESS -> { progress("Téléversement: " + (uploader.progress*100).roundToInt().toString(), (uploader.progress*100).roundToInt())}
                 }
             }
             uploader.progressListener = progressListener
@@ -144,7 +156,7 @@ object UploadVideo {
             println("  - Privacy Status: " + returnedVideo.status.privacyStatus)
             println("  - Video Count: " + returnedVideo.statistics.viewCount)
             val thumbnail = returnedVideo.snippet.thumbnails.default.url
-            val db = FirebaseFirestore.getInstance()
+
 
             val video = hashMapOf(
                 "date_publication" to Timestamp(System.currentTimeMillis()),
@@ -155,8 +167,10 @@ object UploadVideo {
                 "title" to title,
                 "youtube_id" to returnedVideo.id
             )
-
-            db.document(User.company!!.path).collection("videos").add(video)
+            val db = FirebaseFirestore.getInstance()
+            db.document(User.company!!.path).collection("videos").add(video).addOnFailureListener{ it ->
+                print(it.toString())
+            }
 
 
 

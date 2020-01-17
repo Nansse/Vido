@@ -19,22 +19,25 @@ import com.vido.ui.video.VideoActivity
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
-    public override fun onStart() {
-        super.onStart()
-        // Check if user is signed in (non-null) and update UI accordingly.
-        auth = FirebaseAuth.getInstance()
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            login()
-        }
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         val button = findViewById<Button>(R.id.login_button)
-        val textView = findViewById<TextView>(R.id.code_view)
+        val userView = findViewById<TextView>(R.id.code_view)
+        userView.visibility = View.INVISIBLE
+        button.visibility = View.INVISIBLE
+
+        auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            login()
+        } else {
+            userView.visibility = View.VISIBLE
+            button.visibility = View.VISIBLE
+        }
+
         button.setOnClickListener { view ->
-            val user = textView.text.toString()
+            val user = userView.text.toString()
             val password = "testouille"
             auth.signInWithEmailAndPassword(user + "@ma.com", password).addOnCompleteListener{ task ->
                 if (task.isSuccessful) {

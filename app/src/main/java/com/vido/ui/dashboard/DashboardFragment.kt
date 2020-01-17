@@ -4,14 +4,19 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.fragment.app.Fragment
 import android.media.MediaMetadataRetriever
+import android.media.MediaPlayer
 import android.media.MediaScannerConnection
 import android.os.Environment
 import android.view.*
 import android.widget.*
+import androidx.customview.widget.ViewDragHelper
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.livinglifetechway.quickpermissions_kotlin.runWithPermissions
 import com.vido.MainActivity
 import com.vido.R
@@ -19,13 +24,21 @@ import com.vido.VideoEditActivity
 import com.vido.model.UploadVideo
 import com.vido.model.VidoFile
 import kotlin.concurrent.thread
+import kotlin.math.roundToInt
+import com.vido.ui.dashboard.DranNDrop.SimpleItemTouchHelperCallback
+import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.vido.ui.dashboard.DranNDrop.ItemTouchHelperAdapter
+import com.vido.ui.dashboard.DranNDrop.ItemTouchHelperViewHolder
+import com.vido.ui.dashboard.DranNDrop.RecyclerViewAdapter
 
 
 class DashboardFragment : Fragment() {
 
     val VIDEO_CAPTURE = 101
     private lateinit var plans: Plans
-    private lateinit var myCustomAdapter: MyCustomAdapter
+    private lateinit var myCustomAdapter: RecyclerViewAdapter
     lateinit var videoView: VideoView
     lateinit var thumbnailView: ImageView
 
@@ -37,8 +50,9 @@ class DashboardFragment : Fragment() {
         VidoFile.internalFilesDir = context!!.filesDir
 
         val root = inflater.inflate(R.layout.fragment_dashboard, container, false)
-        val listView: ListView = root.findViewById(R.id.listView)
+        val listView: RecyclerView = root.findViewById(R.id.listView)
         videoView = root.findViewById(R.id.video_view)
+        videoView.setVideoPath(VidoFile.finalVideoFile.toString())
         thumbnailView = root.findViewById(R.id.thumbnail_image_view)
 
         val fab: View = root.findViewById(R.id.fab)
@@ -47,10 +61,20 @@ class DashboardFragment : Fragment() {
             startActivityForResult(intent, VIDEO_CAPTURE)
         }
         plans = Plans(context!!)
+        var mC = MediaController(context)
+        videoView.setMediaController(mC)
+        videoView.setOnPreparedListener { mp -> mp.setOnSeekCompleteListener { videoView.start() }}
+
         if (plans.size() != 0) playVideo(0)
-        myCustomAdapter = MyCustomAdapter(context!!, plans, this)
+        myCustomAdapter = RecyclerViewAdapter(context!!, plans, this)
+        val callback = SimpleItemTouchHelperCallback(myCustomAdapter)
+        val touchHelper = ItemTouchHelper(callback)
         listView.adapter = myCustomAdapter
+        listView.setHasFixedSize(true);
+        listView.setLayoutManager(LinearLayoutManager(activity));
+        touchHelper.attachToRecyclerView(listView)
         updateThumbnail()
+        myCustomAdapter.notifyDataSetChanged()
 
         setHasOptionsMenu(true)
 
@@ -68,12 +92,9 @@ class DashboardFragment : Fragment() {
     }
 
     fun playVideo(position: Int = 0) {
-        plans.merge {
-            videoView.setVideoPath(VidoFile.finalVideoFile.toString())
-            videoView.start()
-        }
-        var mC = MediaController(context)
-        videoView.setMediaController(mC)
+        if (position == 0) videoView.start()
+        videoView.setVideoPath(VidoFile.finalVideoFile.toString())
+        videoView.seekTo(plans.startTimeFor(position).roundToInt())
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -81,7 +102,7 @@ class DashboardFragment : Fragment() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == R.id.save_plans) {
+        if(item.itemId == R.id.save_plans && plans.size() != 0) {
             val myIntent = Intent(context, VideoEditActivity::class.java)
             startActivity(myIntent)
         }
@@ -109,13 +130,17 @@ class DashboardFragment : Fragment() {
                 retriever.setDataSource(videoPath)
                 MediaScannerConnection.scanFile(context, arrayOf(Environment.getExternalStorageDirectory().toString()), null, null)
                 val duration =
-                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toInt() / 1000
+                    (retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toDouble() / 1000).roundToInt()
+                val durationMS =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toDouble()
                 retriever.release()
-                var newPlan = Plan(videoPath, duration)
-                plans.add(newPlan)
-                myCustomAdapter.notifyDataSetChanged()
-                updateThumbnail()
-                playVideo()
+                var newPlan = Plan(videoPath, duration, durationMS, plans.size(), plans.size())
+                plans.add(newPlan, {
+                    myCustomAdapter.notifyDataSetChanged()
+                    updateThumbnail()
+                    playVideo()
+                })
+
             }
         }
     }

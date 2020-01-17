@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">Vido</string>
+    <string name="app_name">Paideia</string>
     <string name="title_home">Wiki</string>
     <string name="title_dashboard">Ajouter</string>
     <string name="title_notifications">Profil</string>
+    <string name="title_activity_settings">Parametres</string>
 </resources>

@@ -8,5 +8,11 @@ data class Plan(
     @SerializedName("video_path")
     val video_path: String,
     @SerializedName("duration")
-    val duration: Int
+    val duration: Int,
+    @SerializedName("durationMS")
+    val durationMS: Double,
+    @SerializedName("index")
+    var index: Int,
+    @SerializedName("originalIndex")
+    var originalIndex: Int
 )

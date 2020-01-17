@@ -39,21 +39,41 @@ class Plans(context: Context) {
             val obj = gson.fromJson(json, Plan::class.java)
             list.add(obj)
         }
-        Plans.instance = this
+        instance = this
     }
 
     fun at(index: Int): Plan = list[index]
 
     fun size(): Int = list.size
 
-    fun add(plan: Plan) {
+    fun startTimeFor(position: Int): Double {
+        if (position == 0) return 0.0
+        else return list[position-1].durationMS + startTimeFor(position-1)
+    }
+
+    fun add(plan: Plan, after: () -> Unit) {
         val prefsEditor = mPrefs.edit()
         prefsEditor.putString("${list.size}", gson.toJson(plan))
         prefsEditor.putInt("size", list.size+1)
         prefsEditor.commit()
         list.add(plan)
-        storeStream(plan, size()-1)
-        merge { }
+        storeStream(plan, size()-1, {
+            merge(after)
+        })
+    }
+
+    fun move(from: Int, to: Int) {
+        list.find { e -> e.index == from }!!.index = -1
+        list.find { e -> e.index == to }!!.index = from
+        list.find { e -> e.index == -1 }!!.index = to
+
+        sort()
+    }
+
+    fun sort() {
+        list.sortWith(Comparator { first, second ->
+            first.index.compareTo(second.index)
+        })
     }
 
     fun removeAt(at: Int) {
@@ -66,7 +86,7 @@ class Plans(context: Context) {
             val plan = gson.fromJson(json, Plan::class.java)
             prefsEditor.remove("${i}")
             deleteStream(i)
-            storeStream(plan, i-1)
+            storeStream(plan, i-1, {})
         }
         prefsEditor.putInt("size", list.size-1)
         prefsEditor.commit()
@@ -87,14 +107,14 @@ class Plans(context: Context) {
         val file = File(VidoFile.internalFilesDir.toString() + "/intermediate${at}.ts")
         file.delete()
     }
-    private fun storeStream(plan: Plan, at: Int) {
+    private fun storeStream(plan: Plan, at: Int, after: () -> Unit) {
         var ffmpeg = FFmpeg.getInstance(mContext)
         ffmpeg.execute(("-y -i ${plan.video_path} -c copy -bsf:v h264_mp4toannexb -f mpegts " +
                 VidoFile.internalFilesDir.toString() + "/intermediate${at}.ts")
             .split(" ")
             .toTypedArray(), object: ExecuteBinaryResponseHandler() {
             override fun onSuccess(message: String) {
-
+                after()
             }
             override fun onFailure(message: String?){
                 print(message)
@@ -139,11 +159,6 @@ class Plans(context: Context) {
             override fun onFailure(message: String?){
                 super.onSuccess(message)
                 print(message)
-            }
-
-            override fun onProgress(message: String?) {
-                super.onProgress(message)
-
             }
         })
     }
