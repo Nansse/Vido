@@ -14,5 +14,7 @@ data class Plan(
     @SerializedName("index")
     var index: Int,
     @SerializedName("originalIndex")
-    var originalIndex: Int
+    var originalIndex: Int,
+    @SerializedName("uniqueID")
+    val uniqueID: String
 )

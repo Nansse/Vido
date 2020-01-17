@@ -71,7 +71,7 @@ object UploadVideo {
 
 
     fun main(title: String, description: String, folder: String, progress: (String, Int) -> Unit) {
-        val videoPath = VidoFile.finalVideoFile.toString()
+        val videoPath = VidoFile.compressedFinalVideoFile.toString()
 
         try {
             // Authorize the request.
@@ -111,8 +111,8 @@ object UploadVideo {
             print(videoPath)
 
             val mediaContent = InputStreamContent(VIDEO_FILE_FORMAT,
-                VidoFile.finalVideoFile.inputStream())
-            mediaContent.setLength(VidoFile.finalVideoFile.length())
+                VidoFile.compressedFinalVideoFile.inputStream())
+            mediaContent.setLength(VidoFile.compressedFinalVideoFile.length())
 
             // Insert the video. The command sends three arguments. The first
             // specifies which information the API request is setting and which

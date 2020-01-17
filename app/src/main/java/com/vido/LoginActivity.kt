@@ -1,6 +1,7 @@
 
 package com.vido
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -12,9 +13,11 @@ import android.widget.TextView
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.livinglifetechway.quickpermissions_kotlin.runWithPermissions
 import com.vido.model.Folder
 import com.vido.model.User
 import com.vido.model.VideoDetails
+import com.vido.ui.dashboard.MyCamera.MyCameraActivity
 import com.vido.ui.video.VideoActivity
 
 class LoginActivity : AppCompatActivity() {
@@ -61,8 +64,10 @@ class LoginActivity : AppCompatActivity() {
                 Folder.fetch {
                     VideoDetails.fetch {
                         runOnUiThread(java.lang.Runnable {
-                            val myIntent = Intent(this, MainActivity::class.java)
-                            startActivity(myIntent)
+                            val myIntent = Intent(this, MyCameraActivity::class.java)
+                            this.runWithPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO) {
+                                startActivity(myIntent)
+                            }
                         })
                     }
                 }

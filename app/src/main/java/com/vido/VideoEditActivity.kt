@@ -59,19 +59,23 @@ class VideoEditActivity : AppCompatActivity() {
 //                Upload.main(this)
 //            }
 
-
+            progressTextView.text = "Compression"
             thread(start = true) {
-                UploadVideo.main(titleView.text.toString(), descriptionView.text.toString(), folder, { text, nb ->
-                    runOnUiThread({
-                        progressBar.progress = nb
-                        progressTextView.text = text;
-                    })
-                })
-                this.runOnUiThread( {
-                    VideoDetails.fetch {
-                        finish()
+                Plans.instance.compress {
+                    thread(start = true) {
+                        UploadVideo.main(titleView.text.toString(), descriptionView.text.toString(), folder, { text, nb ->
+                            runOnUiThread({
+                                progressBar.progress = nb
+                                progressTextView.text = text;
+                            })
+                        })
+                        this.runOnUiThread( {
+                            VideoDetails.fetch {
+                                finish()
+                            }
+                        })
                     }
-                })
+                }
 
             }
         }

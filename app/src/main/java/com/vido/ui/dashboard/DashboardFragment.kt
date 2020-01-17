@@ -12,6 +12,7 @@ import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.media.MediaScannerConnection
 import android.os.Environment
+import android.provider.MediaStore.EXTRA_VIDEO_QUALITY
 import android.view.*
 import android.widget.*
 import androidx.customview.widget.ViewDragHelper
@@ -32,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.vido.ui.dashboard.DranNDrop.ItemTouchHelperAdapter
 import com.vido.ui.dashboard.DranNDrop.ItemTouchHelperViewHolder
 import com.vido.ui.dashboard.DranNDrop.RecyclerViewAdapter
+import java.util.*
 
 
 class DashboardFragment : Fragment() {
@@ -57,8 +59,10 @@ class DashboardFragment : Fragment() {
 
         val fab: View = root.findViewById(R.id.fab)
         fab.setOnClickListener { view ->
-            val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
-            startActivityForResult(intent, VIDEO_CAPTURE)
+            context.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE) {
+                val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+                startActivityForResult(intent, VIDEO_CAPTURE)
+            }
         }
         plans = Plans(context!!)
         var mC = MediaController(context)
@@ -134,7 +138,7 @@ class DashboardFragment : Fragment() {
                 val durationMS =
                     retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toDouble()
                 retriever.release()
-                var newPlan = Plan(videoPath, duration, durationMS, plans.size(), plans.size())
+                var newPlan = Plan(videoPath, duration, durationMS, plans.size(), plans.size(), UUID.randomUUID().toString())
                 plans.add(newPlan, {
                     myCustomAdapter.notifyDataSetChanged()
                     updateThumbnail()
@@ -164,16 +168,16 @@ private class MyCustomAdapter(context: Context, plans: Plans, fragment: Dashboar
         row_plans.findViewById<TextView>(R.id.plan_number_view).text = "Plan ${position + 1}"
         row_plans.findViewById<TextView>(R.id.timeView).text = "${mPlans.at(position).duration}s"
         row_plans.findViewById<ImageButton>(R.id.delete_button).tag = position
-        row_plans.findViewById<ImageButton>(R.id.delete_button).setOnClickListener { view -> deleteVideo(view.tag.toString().toInt()) }
+        row_plans.findViewById<ImageButton>(R.id.delete_button).setOnClickListener { view -> deleteVideo(view.tag.toString()) }
         row_plans.findViewById<ImageButton>(R.id.play_button).tag = position
-        row_plans.findViewById<ImageButton>(R.id.play_button).setOnClickListener { view -> playVideo(view.tag.toString().toInt()) }
+        row_plans.findViewById<ImageButton>(R.id.play_button).setOnClickListener { view -> playVideo(view.tag.toString()) }
         return row_plans
     }
-    private fun playVideo(position: Int) {
-        mFragment.playVideo(position)
+    private fun playVideo(uniqueId: String) {
+        mFragment.playVideo(Plans.instance.findWithUniqueId(uniqueId).index)
     }
-    private fun deleteVideo(position: Int) = mContext.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE) {
-        mPlans.removeAt(position)
+    private fun deleteVideo(uniqueId: String) = mContext.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE) {
+        mPlans.removeAt(Plans.instance.findWithUniqueId(uniqueId).index)
         mFragment.updateThumbnail()
         notifyDataSetChanged()
     }

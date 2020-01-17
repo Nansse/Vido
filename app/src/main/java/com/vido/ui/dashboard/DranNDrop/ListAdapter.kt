@@ -12,11 +12,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.livinglifetechway.quickpermissions_kotlin.runWithPermissions
 import com.vido.R
 import com.vido.ui.dashboard.DashboardFragment
+import com.vido.ui.dashboard.Plan
 import com.vido.ui.dashboard.Plans
 
 class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView),
     ItemTouchHelperViewHolder {
-
     val row_plans: ConstraintLayout
 
     init {
@@ -58,17 +58,17 @@ class RecyclerViewAdapter(context: Context, plans: Plans, fragment: DashboardFra
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
         holder.row_plans.findViewById<TextView>(R.id.plan_number_view).text = "Plan ${mPlans.at(position).originalIndex + 1}"
         holder.row_plans.findViewById<TextView>(R.id.timeView).text = "${mPlans.at(position).duration}s"
-        holder.row_plans.findViewById<ImageButton>(R.id.delete_button).tag = position
-        holder.row_plans.findViewById<ImageButton>(R.id.delete_button).setOnClickListener { view -> deleteVideo(view.tag.toString().toInt()) }
-        holder.row_plans.findViewById<ImageButton>(R.id.play_button).tag = position
-        holder.row_plans.findViewById<ImageButton>(R.id.play_button).setOnClickListener { view -> playVideo(view.tag.toString().toInt()) }
+        holder.row_plans.findViewById<ImageButton>(R.id.delete_button).tag = mPlans.at(position).uniqueID
+        holder.row_plans.findViewById<ImageButton>(R.id.delete_button).setOnClickListener { view -> deleteVideo(view.tag.toString()) }
+        holder.row_plans.findViewById<ImageButton>(R.id.play_button).tag = mPlans.at(position).uniqueID
+        holder.row_plans.findViewById<ImageButton>(R.id.play_button).setOnClickListener { view -> playVideo(view.tag.toString()) }
     }
 
-    private fun playVideo(position: Int) {
-        mFragment.playVideo(position)
+    private fun playVideo(uniqueId: String) {
+        mFragment.playVideo(Plans.instance.findWithUniqueId(uniqueId).index)
     }
-    private fun deleteVideo(position: Int) = mContext.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE) {
-        mPlans.removeAt(position)
+    private fun deleteVideo(uniqueId: String) = mContext.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE) {
+        mPlans.removeAt(Plans.instance.findWithUniqueId(uniqueId).index)
         mFragment.updateThumbnail()
         notifyDataSetChanged()
     }

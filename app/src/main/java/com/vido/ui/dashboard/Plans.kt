@@ -39,10 +39,12 @@ class Plans(context: Context) {
             val obj = gson.fromJson(json, Plan::class.java)
             list.add(obj)
         }
+        sort()
         instance = this
     }
 
     fun at(index: Int): Plan = list[index]
+    fun findWithUniqueId(uniqueID: String): Plan = list.find { e -> e.uniqueID == uniqueID }!!
 
     fun size(): Int = list.size
 
@@ -57,17 +59,23 @@ class Plans(context: Context) {
         prefsEditor.putInt("size", list.size+1)
         prefsEditor.commit()
         list.add(plan)
-        storeStream(plan, size()-1, {
+        storeStream(plan, {
             merge(after)
         })
     }
 
-    fun move(from: Int, to: Int) {
+    fun move(from: Int, to: Int, andMerge: Boolean = true) {
         list.find { e -> e.index == from }!!.index = -1
         list.find { e -> e.index == to }!!.index = from
         list.find { e -> e.index == -1 }!!.index = to
-
+        val prefsEditor = mPrefs.edit()
+        prefsEditor.remove("${from}")
+        prefsEditor.remove("${to}")
+        prefsEditor.putString("${from}", gson.toJson(list.find { e -> e.index == from }))
+        prefsEditor.putString("${to}", gson.toJson(list.find { e -> e.index == to }))
+        prefsEditor.commit()
         sort()
+        if (andMerge) merge {  }
     }
 
     fun sort() {
@@ -77,21 +85,16 @@ class Plans(context: Context) {
     }
 
     fun removeAt(at: Int) {
-        val prefsEditor = mPrefs.edit()
-        prefsEditor.remove("${at}")
-        deleteStream(at)
-        for(i in at+1 until list.size) {
-            val json = mPrefs.getString("${i}", "")
-            prefsEditor.putString("${i-1}", json)
-            val plan = gson.fromJson(json, Plan::class.java)
-            prefsEditor.remove("${i}")
-            deleteStream(i)
-            storeStream(plan, i-1, {})
+        for (i in at until size()-1) {
+            move(i, i+1, false)
         }
+        val prefsEditor = mPrefs.edit()
+        prefsEditor.remove("${size()-1}")
+        deleteStream(size()-1)
         prefsEditor.putInt("size", list.size-1)
         prefsEditor.commit()
-        File(list[at].video_path).delete()
-        list.removeAt(at)
+        File(list.last().video_path).delete()
+        list.removeAt(list.size-1)
         if(size() == 0) {
             VidoFile.finalVideoFile.delete()
         } else {
@@ -104,13 +107,13 @@ class Plans(context: Context) {
         editor.commit()
     }
     private fun deleteStream(at: Int) {
-        val file = File(VidoFile.internalFilesDir.toString() + "/intermediate${at}.ts")
+        val file = File(VidoFile.internalFilesDir.toString() + "/intermediate${list[at].uniqueID}.ts")
         file.delete()
     }
-    private fun storeStream(plan: Plan, at: Int, after: () -> Unit) {
+    private fun storeStream(plan: Plan, after: () -> Unit) {
         var ffmpeg = FFmpeg.getInstance(mContext)
         ffmpeg.execute(("-y -i ${plan.video_path} -c copy -bsf:v h264_mp4toannexb -f mpegts " +
-                VidoFile.internalFilesDir.toString() + "/intermediate${at}.ts")
+                VidoFile.internalFilesDir.toString() + "/intermediate${plan.uniqueID}.ts")
             .split(" ")
             .toTypedArray(), object: ExecuteBinaryResponseHandler() {
             override fun onSuccess(message: String) {
@@ -126,7 +129,7 @@ class Plans(context: Context) {
         var ffmpeg = FFmpeg.getInstance(mContext)
         var executable = "-y -i concat:"
         for (i in 0 until size()) {
-            executable += VidoFile.internalFilesDir.toString() + "/intermediate${i}.ts"
+            executable += VidoFile.internalFilesDir.toString() + "/intermediate${list[i].uniqueID}.ts"
             if(i != size()-1) {
                 executable += "|"
             }

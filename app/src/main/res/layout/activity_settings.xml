@@ -38,7 +38,7 @@
                 android:id="@+id/textView2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nouveau dossier"
+                android:text="Créer un dossier"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
             <TextView
