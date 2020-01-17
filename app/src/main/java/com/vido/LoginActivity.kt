@@ -64,10 +64,8 @@ class LoginActivity : AppCompatActivity() {
                 Folder.fetch {
                     VideoDetails.fetch {
                         runOnUiThread(java.lang.Runnable {
-                            val myIntent = Intent(this, MyCameraActivity::class.java)
-                            this.runWithPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO) {
-                                startActivity(myIntent)
-                            }
+                            val myIntent = Intent(this, MainActivity::class.java)
+                            startActivity(myIntent)
                         })
                     }
                 }

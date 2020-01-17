@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.vido.ui.dashboard.DranNDrop.ItemTouchHelperAdapter
 import com.vido.ui.dashboard.DranNDrop.ItemTouchHelperViewHolder
 import com.vido.ui.dashboard.DranNDrop.RecyclerViewAdapter
+import com.vido.ui.dashboard.MyCamera.MyCameraActivity
 import java.util.*
 
 
@@ -59,8 +60,8 @@ class DashboardFragment : Fragment() {
 
         val fab: View = root.findViewById(R.id.fab)
         fab.setOnClickListener { view ->
-            context.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE) {
-                val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+            context.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO) {
+                val intent = Intent(context, MyCameraActivity::class.java)
                 startActivityForResult(intent, VIDEO_CAPTURE)
             }
         }
@@ -118,18 +119,18 @@ class DashboardFragment : Fragment() {
 
         if (requestCode == VIDEO_CAPTURE) {
             if (resultCode == Activity.RESULT_OK) {
-                var videoPath = String()
-                val uri = data!!.data
-                val filePathColumn = arrayOf(MediaStore.Images.Media.DATA)
-                val cursor = context!!.getContentResolver().query(uri!!, filePathColumn, null, null, null)
-                if (cursor!!.moveToFirst()) {
-                    val columnIndex = cursor.getColumnIndex(filePathColumn[0])
-                    videoPath = cursor!!.getString(columnIndex)
-                }
-                cursor.close()
-                videoPath = VidoFile.copyToInternalStorage(videoPath)
+//                var videoPath = String()
+//                val uri = data!!.data
+//                val filePathColumn = arrayOf(MediaStore.Images.Media.DATA)
+//                val cursor = context!!.getContentResolver().query(uri!!, filePathColumn, null, null, null)
+//                if (cursor!!.moveToFirst()) {
+//                    val columnIndex = cursor.getColumnIndex(filePathColumn[0])
+//                    videoPath = cursor!!.getString(columnIndex)
+//                }
+//                cursor.close()
+//                videoPath = VidoFile.copyToInternalStorage(videoPath)
 
-
+                var videoPath = data!!.getStringExtra("file_path")
                 val retriever = MediaMetadataRetriever()
                 retriever.setDataSource(videoPath)
                 MediaScannerConnection.scanFile(context, arrayOf(Environment.getExternalStorageDirectory().toString()), null, null)

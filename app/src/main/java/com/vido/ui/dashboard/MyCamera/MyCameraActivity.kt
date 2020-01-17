@@ -14,6 +14,12 @@ import androidx.camera.core.*
 import androidx.lifecycle.LifecycleOwner
 import com.vido.R
 import java.io.File
+import android.content.Intent
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.app.Activity
+
 
 @SuppressLint("RestrictedApi")
 class MyCameraActivity : AppCompatActivity(), LifecycleOwner {
@@ -38,10 +44,14 @@ class MyCameraActivity : AppCompatActivity(), LifecycleOwner {
                 captureButton.setBackgroundColor(Color.GREEN)
                 videoCapture.startRecording(file, object: VideoCapture.OnVideoSavedListener{
                     override fun onVideoSaved(file: File?) {
-                        Log.i("", "Video File : $file")
+                        val intent = Intent()
+                        intent.putExtra("file_path", file!!.path.toString())
+                        setResult(Activity.RESULT_OK, intent)
+                        finish()
                     }
                     override fun onError(useCaseError: VideoCapture.UseCaseError?, message: String?, cause: Throwable?) {
-                        Log.i("", "Video Error: $message")
+                        setResult(Activity.RESULT_CANCELED)
+                        finish()
                     }
                 })
 
@@ -57,7 +67,7 @@ class MyCameraActivity : AppCompatActivity(), LifecycleOwner {
         CameraX.unbindAll()
         // Create configuration object for the viewfinder use case
         val previewConfig = PreviewConfig.Builder().apply {
-            setTargetAspectRatio(Rational(1,1))
+            //setTargetAspectRatio(Rational(1,1))
             //setTargetResolution(Size(640,640))
         }.build()
         // Build the viewfinder use case
