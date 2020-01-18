@@ -56,6 +56,8 @@ class SettingsActivity : AppCompatActivity() {
                 builder.setMessage("Le dossier contient encore des documents")
                 builder.setPositiveButton("Ok", DialogInterface.OnClickListener({_ ,_ -> }))
                 builder.create().show()
+            } else {
+                finish()
             }
         }
 
