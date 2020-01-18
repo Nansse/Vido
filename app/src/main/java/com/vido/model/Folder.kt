@@ -11,7 +11,7 @@ data class Folder(
 ) {
 
     fun delete(): Boolean {
-        if (list.count { it.parent == name } != 0 && VideoDetails.all.count{it.folder_name == name} != 0) return false
+        if (list.count { it.parent == name } != 0 || VideoDetails.all.count{it.folder_name == name} != 0) return false
         val db = FirebaseFirestore.getInstance()
         db.document(reference!!.path).delete()
         list.remove(this)

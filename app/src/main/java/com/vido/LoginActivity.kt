@@ -2,13 +2,16 @@
 package com.vido
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
@@ -26,27 +29,32 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         val button = findViewById<Button>(R.id.login_button)
-        val userView = findViewById<TextView>(R.id.code_view)
-        userView.visibility = View.INVISIBLE
-        button.visibility = View.INVISIBLE
+        val emailView = findViewById<TextView>(R.id.email_adress_view)
+        val passwordView = findViewById<TextView>(R.id.password_view)
+        val layout = findViewById<LinearLayout>(R.id.linear_layout_login)
+        layout.visibility = View.INVISIBLE
 
         auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
         if (currentUser != null) {
             login()
         } else {
-            userView.visibility = View.VISIBLE
-            button.visibility = View.VISIBLE
+            layout.visibility = View.VISIBLE
         }
 
         button.setOnClickListener { view ->
-            val user = userView.text.toString()
-            val password = "testouille"
-            auth.signInWithEmailAndPassword(user + "@ma.com", password).addOnCompleteListener{ task ->
+            var user = emailView.text.toString()
+            var password = passwordView.text.toString()
+            if(user.isEmpty() || user.isBlank()) user = "abc"
+            if(password.isEmpty() || password.isBlank()) password = "abc"
+            auth.signInWithEmailAndPassword(user, password).addOnCompleteListener{ task ->
                 if (task.isSuccessful) {
                     login()
                 } else {
-                    Snackbar.make(findViewById(android.R.id.content), task.exception!!.message.toString(), Snackbar.LENGTH_LONG).show()
+                    val builder = AlertDialog.Builder(this)
+                    builder.setMessage("Impossible de se connecter")
+                    builder.setPositiveButton("D'accord", DialogInterface.OnClickListener({ _, _ -> }))
+                    builder.create().show()
                 }
             }
         }
