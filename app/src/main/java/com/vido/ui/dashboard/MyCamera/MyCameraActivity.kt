@@ -15,74 +15,87 @@ import androidx.lifecycle.LifecycleOwner
 import com.vido.R
 import java.io.File
 import android.content.Intent
-import androidx.core.app.ComponentActivity.ExtraData
 import androidx.core.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.app.Activity
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import androidx.camera.camera2.Camera2Config
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.CameraView
+import com.vido.MyApplication
+import java.util.concurrent.Executor
+
+
 
 
 @SuppressLint("RestrictedApi")
-class MyCameraActivity : AppCompatActivity(), LifecycleOwner {
+class MyCameraActivity : AppCompatActivity(){
 
-    private lateinit var viewFinder: TextureView
+    private lateinit var cameraView: CameraView
     private lateinit var captureButton: ImageButton
-    private lateinit var videoCapture: VideoCapture
     private lateinit var file: File
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
+        if (CameraX.isInitialized()) {
+            CameraX.unbindAll()
+            CameraX.shutdown()
+        }
+        CameraX.initialize(this, (application as MyApplication).cameraXConfig)
+        ProcessCameraProvider.getInstance(this)
         setContentView(R.layout.activity_my_camera)
-        viewFinder = findViewById(R.id.view_finder)
+        cameraView = findViewById(R.id.view_finder)
+        cameraView.captureMode = CameraView.CaptureMode.VIDEO
+        cameraView.isPinchToZoomEnabled = true
+        cameraView.bindToLifecycle(this)
         captureButton = findViewById(R.id.capture_button)
         file = File(filesDir, "${System.currentTimeMillis()}.mp4")
 
-        startCamera()
         captureButton.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 captureButton.setBackgroundColor(Color.GREEN)
-                videoCapture.startRecording(file, object: VideoCapture.OnVideoSavedListener{
-                    override fun onVideoSaved(file: File?) {
-                        val intent = Intent()
-                        intent.putExtra("file_path", file!!.path.toString())
-                        setResult(Activity.RESULT_OK, intent)
-                        finish()
+
+                cameraView.startRecording(file, object: Executor {
+                    override fun execute(command: Runnable) {
+                        runOnUiThread({command.run()})
                     }
-                    override fun onError(useCaseError: VideoCapture.UseCaseError?, message: String?, cause: Throwable?) {
-                        setResult(Activity.RESULT_CANCELED)
-                        finish()
-                    }
-                })
+                },
+                    object : VideoCapture.OnVideoSavedCallback {
+                        override fun onVideoSaved(file: File) {
+                            val intent = Intent()
+                            intent.putExtra("file_path", file!!.path.toString())
+                            setResult(Activity.RESULT_OK, intent)
+                            finish()
+                        }
+
+                        override fun onError(
+                            videoCaptureError: Int,
+                            message: String,
+                            cause: Throwable?
+                        ) {
+                            setResult(Activity.RESULT_CANCELED)
+                            finish()
+                        }
+                    })
 
             } else if (event.action == MotionEvent.ACTION_UP) {
                 captureButton.setBackgroundColor(Color.RED)
-                videoCapture.stopRecording()
-                Log.i("", "Video File stopped")
+                cameraView.stopRecording()
             }
             false
         }
-    }
-    private fun startCamera() {
-        CameraX.unbindAll()
-        // Create configuration object for the viewfinder use case
-        val previewConfig = PreviewConfig.Builder().apply {
-            //setTargetAspectRatio(Rational(1,1))
-            //setTargetResolution(Size(640,640))
-        }.build()
-        // Build the viewfinder use case
-        val preview = Preview(previewConfig)
 
-        val videoCaptureConfig = VideoCaptureConfig.Builder().apply {
-            if (viewFinder.display != null) setTargetRotation(viewFinder.display.rotation)
-        }.build()
-        videoCapture = VideoCapture(videoCaptureConfig)
-
-        preview.setOnPreviewOutputUpdateListener {
-            viewFinder.surfaceTexture = it.surfaceTexture
+        val switchButton = findViewById<ImageButton>(R.id.switch_camera_button)
+        switchButton.setOnClickListener {
+            cameraView.toggleCamera()
         }
-        // Bind use cases to lifecycle
-        CameraX.bindToLifecycle(this, preview, videoCapture)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
 
     }
 }

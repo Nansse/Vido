@@ -14,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.vido.model.Folder
 import com.vido.model.User
+import com.vido.model.VideoDetails
 
 import kotlinx.android.synthetic.main.activity_settings.*
 import java.sql.Timestamp
@@ -50,7 +51,12 @@ class SettingsActivity : AppCompatActivity() {
 
         val deleteFolderButton = findViewById<Button>(R.id.delete_folder_button)
         deleteFolderButton.setOnClickListener { view ->
-            // TODO
+            if (!Folder.list.find { it.name == spinnerDeleteFolder.selectedItem }!!.delete()) {
+                val builder = AlertDialog.Builder(this)
+                builder.setMessage("Le dossier contient encore des documents")
+                builder.setPositiveButton("Ok", DialogInterface.OnClickListener({_ ,_ -> }))
+                builder.create().show()
+            }
         }
 
         val deconnexion_button = findViewById<Button>(R.id.deconnexion_button)

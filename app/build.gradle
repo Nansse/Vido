@@ -76,9 +76,15 @@ dependencies {
     implementation('com.google.api-client:google-api-client-android:1.22.0') {
         exclude group: 'org.apache.httpcomponents'
     }
-    def camerax_version = "1.0.0-alpha01"
+    def camerax_version = "1.0.0-alpha08"
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-camera2:${camerax_version}"
+    // If you want to use the CameraX View class
+    implementation "androidx.camera:camera-view:1.0.0-alpha05"
+    // If you want to use the CameraX Extensions library
+    implementation "androidx.camera:camera-extensions:1.0.0-alpha05"
+    // If you want to use the CameraX Lifecycle library
+    implementation "androidx.camera:camera-lifecycle:1.0.0-alpha02"
 
 }
 
