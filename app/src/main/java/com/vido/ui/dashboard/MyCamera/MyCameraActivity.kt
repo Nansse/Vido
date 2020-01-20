@@ -37,7 +37,6 @@ class MyCameraActivity : AppCompatActivity(){
     private lateinit var captureButton: ImageButton
     private lateinit var file: File
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (CameraX.isInitialized()) {

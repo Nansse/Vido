@@ -20,7 +20,7 @@
     <FrameLayout
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
-        android:layout_height="240dp"
+        android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -28,14 +28,14 @@
         <ImageView
             android:id="@+id/thumbnail_image_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="232dp"
             android:contentDescription="thumbnail"
             app:srcCompat="@drawable/video_placeholder" />
 
         <VideoView
             android:id="@+id/video_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="fill"
             android:visibility="invisible"
             app:layout_constraintBottom_toBottomOf="parent"
