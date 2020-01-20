@@ -30,11 +30,11 @@
             android:layout_width="match_parent"
             android:layout_height="232dp"
             android:contentDescription="thumbnail"
-            app:srcCompat="@drawable/video_placeholder" />
+            app:srcCompat="@drawable/rsz_video_placeholder" />
 
         <VideoView
             android:id="@+id/video_view"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="fill"
             android:visibility="invisible"

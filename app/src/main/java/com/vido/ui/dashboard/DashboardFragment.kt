@@ -13,6 +13,7 @@ import android.media.MediaPlayer
 import android.media.MediaScannerConnection
 import android.os.Environment
 import android.provider.MediaStore.EXTRA_VIDEO_QUALITY
+import android.text.Layout
 import android.view.*
 import android.widget.*
 import androidx.customview.widget.ViewDragHelper
@@ -57,7 +58,6 @@ class DashboardFragment : Fragment() {
         videoView = root.findViewById(R.id.video_view)
         videoView.setVideoPath(VidoFile.finalVideoFile.toString())
         thumbnailView = root.findViewById(R.id.thumbnail_image_view)
-
         val fab: View = root.findViewById(R.id.fab)
         fab.setOnClickListener { view ->
             context.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO) {
@@ -119,16 +119,6 @@ class DashboardFragment : Fragment() {
 
         if (requestCode == VIDEO_CAPTURE) {
             if (resultCode == Activity.RESULT_OK) {
-//                var videoPath = String()
-//                val uri = data!!.data
-//                val filePathColumn = arrayOf(MediaStore.Images.Media.DATA)
-//                val cursor = context!!.getContentResolver().query(uri!!, filePathColumn, null, null, null)
-//                if (cursor!!.moveToFirst()) {
-//                    val columnIndex = cursor.getColumnIndex(filePathColumn[0])
-//                    videoPath = cursor!!.getString(columnIndex)
-//                }
-//                cursor.close()
-//                videoPath = VidoFile.copyToInternalStorage(videoPath)
 
                 var videoPath = data!!.getStringExtra("file_path")
                 val retriever = MediaMetadataRetriever()
@@ -148,49 +138,5 @@ class DashboardFragment : Fragment() {
 
             }
         }
-    }
-}
-
-
-private class MyCustomAdapter(context: Context, plans: Plans, fragment: DashboardFragment): BaseAdapter() {
-
-    private val mContext: Context
-    private val mPlans: Plans
-    private val mFragment: DashboardFragment
-
-    init {
-        mContext = context
-        mPlans = plans
-        mFragment = fragment
-    }
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        val layoutInflater = LayoutInflater.from(mContext)
-        val row_plans = layoutInflater.inflate(R.layout.row_plan, parent, false)
-        row_plans.findViewById<TextView>(R.id.plan_number_view).text = "Plan ${position + 1}"
-        row_plans.findViewById<TextView>(R.id.timeView).text = "${mPlans.at(position).duration}s"
-        row_plans.findViewById<ImageButton>(R.id.delete_button).tag = position
-        row_plans.findViewById<ImageButton>(R.id.delete_button).setOnClickListener { view -> deleteVideo(view.tag.toString()) }
-        row_plans.findViewById<ImageButton>(R.id.play_button).tag = position
-        row_plans.findViewById<ImageButton>(R.id.play_button).setOnClickListener { view -> playVideo(view.tag.toString()) }
-        return row_plans
-    }
-    private fun playVideo(uniqueId: String) {
-        mFragment.playVideo(Plans.instance.findWithUniqueId(uniqueId).index)
-    }
-    private fun deleteVideo(uniqueId: String) = mContext.runWithPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE) {
-        mPlans.removeAt(Plans.instance.findWithUniqueId(uniqueId).index)
-        mFragment.updateThumbnail()
-        notifyDataSetChanged()
-    }
-    override fun getItem(position: Int): Any {
-        return "Hello"
-    }
-
-    override fun getItemId(position: Int): Long {
-        return position.toLong()
-    }
-
-    override fun getCount(): Int {
-        return mPlans.size()
     }
 }
